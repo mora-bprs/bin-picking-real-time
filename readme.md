@@ -27,27 +27,35 @@ There are two ways that you can use the model:
 - Clone the repository
 
 ```bash
-  git clone https://github.com/mora-bprs/bin-picking-real-time.git
-  cd bin-picking-real-time
+git clone https://github.com/mora-bprs/bin-picking-real-time.git
+cd bin-picking-real-time
 ```
 
 - Create a python environment
   
 ```bash
-  python -m venv bin-venv
-  bin-venv\Scripts\Activate.ps1
+python -m venv bin-venv
+bin-venv\Scripts\Activate.ps1
 ```
 
 - Install the required packages. About 300MB of data will be downloaded.
 
 ```bash
-  pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 - Run the python script for real-time inference
 
 ```bash
-  python smooth_main_rt.py
+python smooth_main_rt.py
+```
+
+- Press 'q' to exit the real-time inference.
+
+- Run the following command to deactivate the virtual environment
+
+```bash
+deactivate
 ```
 
 ## Possible Errors & Solutions
