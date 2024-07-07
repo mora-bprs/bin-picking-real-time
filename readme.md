@@ -17,22 +17,21 @@ Currently, `fastSAM.ipynb` is partially ready for public consumption.
 
 ### 2. Local Environment for Real-time Inference
 
-- Make sure you have Python version >= 3.10:
-  ```shell
-    python3 --version
-  ```
+- Clone the repository
 
-- Create a Python virtual environment (preferably in the working directory):
-  ```shell
-    python3 -m venv .venv
+```
+  git clone https://github.com/mora-bprs/bin-picking-real-time.git
+  cd bin-picking-real-time
+```
+
+- Create a python environment
+  
   ```
-- Activate the Python environment according to your shell.
-- Install pip dependencies:
-  ```shell
-    pip install -r requirements.txt
+    python -m venv bin-venv
+    source venv/bin/activate
   ```
-- Run the notebook in VSCode with Python and Jupyter extensions or in the Jupyter environment.
-- Set the `INITIALIZED` variable accordingly.
+- Install the required packages 
+- Run the python script 
 
 ## Model Checkpoints
 
@@ -41,3 +40,7 @@ Source: [https://pypi.org/project/segment-anything-fast/](https://pypi.org/proje
 Click the links below to download the checkpoint for the corresponding model type.
 
 - `default` or `FastSAM`: [YOLOv8x based Segment Anything Model](https://drive.google.com/file/d/1m1sjY4ihXBU1fZXdQ-Xdj-mDltW-2Rqv/view?usp=sharing) | [Baidu Cloud (pwd: 0000)](https://pan.baidu.com/s/18KzBmOTENjByoWWR17zdiQ?pwd=0000).
+
+## Possible Errors
+
+- You have to install python and venv if not installed
