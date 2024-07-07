@@ -1,16 +1,23 @@
-# mora-bprs/ SAM-model
+# Bin-Picking-Real-Time
 
 ## Getting Started
 
-Currently, `fastSAM.ipynb` is partially ready for public consumption.
+There are two ways that you can use the model:
+
+1. Using Google Colab.
+
+- You can have a look at the notebook and run it in Google Colab.
+- Not recommended for real-time inference.
+
+2. Using a local environment for real-time inference.
+
+- You can clone the repository and run the python script for real-time inference.
 
 ### 1. Google Colab
 
-- Open the notebook in Colab
-  
-  <a target="_blank" href="https://colab.research.google.com/github/mora-bprs/sam-model/blob/main/fast-sam.ipynb">
-    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open in Google Colab"/>
-  </a>
+- Open the notebook in Colab <a target="_blank" href="https://colab.research.google.com/github/mora-bprs/sam-model/blob/main/fast-sam.ipynb">
+<img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open in Google Colab"/>
+</a>
 
 - Modify the `COLAB` and `INITIALIZED` variables accordingly.
 - Menu -> Runtime -> Run All -> Sit back and relax.
@@ -19,19 +26,36 @@ Currently, `fastSAM.ipynb` is partially ready for public consumption.
 
 - Clone the repository
 
-```
+```bash
   git clone https://github.com/mora-bprs/bin-picking-real-time.git
   cd bin-picking-real-time
 ```
 
 - Create a python environment
   
-  ```
-    python -m venv bin-venv
-    source venv/bin/activate
-  ```
-- Install the required packages 
-- Run the python script 
+```bash
+  python -m venv bin-venv
+  bin-venv\Scripts\Activate.ps1
+```
+
+- Install the required packages. About 300MB of data will be downloaded.
+
+```bash
+  pip install -r requirements.txt
+```
+
+- Run the python script for real-time inference
+
+```bash
+  python smooth_main_rt.py
+```
+
+## Possible Errors & Solutions
+
+- You have to install python and venv if not installed
+- Python version used:  `3.10.7`
+- Install all the requirements in a virtual environment and then run the scripts
+- Change camera index if there are multiple cameras connected to the system (`default` is  `0`)
 
 ## Model Checkpoints
 
@@ -40,7 +64,3 @@ Source: [https://pypi.org/project/segment-anything-fast/](https://pypi.org/proje
 Click the links below to download the checkpoint for the corresponding model type.
 
 - `default` or `FastSAM`: [YOLOv8x based Segment Anything Model](https://drive.google.com/file/d/1m1sjY4ihXBU1fZXdQ-Xdj-mDltW-2Rqv/view?usp=sharing) | [Baidu Cloud (pwd: 0000)](https://pan.baidu.com/s/18KzBmOTENjByoWWR17zdiQ?pwd=0000).
-
-## Possible Errors
-
-- You have to install python and venv if not installed

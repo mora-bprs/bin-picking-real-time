@@ -7,8 +7,7 @@ from fastsam import FastSAM, FastSAMPrompt
 from utils import get_box_coordinates, get_image_with_box_corners
 
 # Configuration
-fast_sam_checkpoint = "/content/FastSAM-x.pt"
-fast_sam_s_checkpoint = "/content/FastSAM-s.pt"
+fast_sam_s_checkpoint = "FastSAM-s.pt"
 
 # device = get_device()
 device = "cpu"
@@ -39,7 +38,7 @@ while True:
   
   try:
   
-    box_corners_dict = get_box_coordinates(frame, model, device, False, False, False)  # it seems like model does not care about the color format , i'm not sure, have to verify???
+    box_corners_dict = get_box_coordinates(frame, model, device, False, False, False)  
     annotated_frame = get_image_with_box_corners(frame, box_corners_dict) # in RGB 
 
     # convert back to BGR
