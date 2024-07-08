@@ -22,7 +22,7 @@ There are two ways that you can use the model:
 - Modify the `COLAB` and `INITIALIZED` variables accordingly.
 - Menu -> Runtime -> Run All -> Sit back and relax.
 
-### 2. Local Environment for Real-time Inference
+### 2. Local Environment for Real-time Inference (For Windows)
 
 - Clone the repository
 
