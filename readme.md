@@ -2,7 +2,7 @@
 
 Here's the real-time video demonstration using the Fast-SAM model.
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/pogcyD64Qgk?si=ghniwcxx3rYkDeWN" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+[Watch the video on YouTube](https://www.youtube.com/watch?v=pogcyD64Qgk)
 
 ## Getting Started
 
