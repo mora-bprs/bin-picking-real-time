@@ -6,6 +6,8 @@ import cv2
 import time
 from threading import Thread
 import torch
+import sys
+import serial.tools.list_ports
 from utils import get_device, get_model, get_box_coordinates, get_image_with_box_corners
 
 # Configuration
@@ -82,11 +84,39 @@ def print_configuration():
 
 
 def main():
+    ports = serial.tools.list_ports.comports()
+    baud_rate = 9600
+    
+    
+    print("Specified baud rate:", baud_rate)
+
+    for port, desc, hwid in sorted(ports):
+        print("Port:",port,"\nDesc:",desc,"\nHwid:",hwid,"\n")
+        
+    if len(ports) == 0:
+        print("No serial ports found")
+        sys.exit()
+    elif len(ports) == 1:
+        port = ports[0].device
+    
     print_configuration()
     
     webcam_stream = WebcamStream(stream_id=camera_index, buffer_size=buffer_size)
     webcam_stream.start()
 
+    # Start Serial communication with the board
+    isSerialPortWorking = False
+    try:
+        ser = serial.Serial(port, baud_rate, timeout=1)
+        isSerialPortWorking = True
+        return ser
+    except serial.SerialException as e:
+        print(f"Error opening serial port: {e}")
+        sys.exit()
+    except PermissionError as e:
+        print(f"Permission error: {e}")
+        print("Ensure no other application is using the port and you have the necessary permissions.")
+        
     num_frames_processed = 0 
     start = time.time()
 
@@ -100,6 +130,12 @@ def main():
         try:
             box_corners_dict = get_box_coordinates(frame, model, device, False, False, False)
             print(box_corners_dict)
+            
+            if isSerialPortWorking:
+                # Send the box coordinates to the board
+                ser.write(str(box_corners_dict).encode('utf-8'))
+                ser.write(b'\n')
+            
             annotated_frame = get_image_with_box_corners(frame, box_corners_dict)
             num_frames_processed += 1
 
@@ -111,6 +147,8 @@ def main():
         num_frames_processed += 1
 
         if cv2.waitKey(1) == ord('q'):
+            if isSerialPortWorking:
+                ser.close()
             break
 
     elapsed = time.time() - start
