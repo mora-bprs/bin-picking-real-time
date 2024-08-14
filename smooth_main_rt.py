@@ -10,7 +10,7 @@ import sys
 import serial.tools.list_ports
 from utils import get_device, get_model, get_box_coordinates, get_image_with_box_corners
 
-# Configuration
+# Configuration     
 camera_index = 0  # Change according to your camera (0 for default camera)
 buffer_size = 2
 model_name = "fastSAM-s"
@@ -84,6 +84,8 @@ def print_configuration():
 
 
 def main():
+    print_configuration()
+    
     ports = serial.tools.list_ports.comports()
     baud_rate = 9600
     
@@ -92,30 +94,19 @@ def main():
 
     for port, desc, hwid in sorted(ports):
         print("Port:",port,"\nDesc:",desc,"\nHwid:",hwid,"\n")
-        
-    if len(ports) == 0:
-        print("No serial ports found")
-        sys.exit()
-    elif len(ports) == 1:
-        port = ports[0].device
     
-    print_configuration()
+    
     
     webcam_stream = WebcamStream(stream_id=camera_index, buffer_size=buffer_size)
     webcam_stream.start()
 
     # Start Serial communication with the board
     isSerialPortWorking = False
-    try:
+    if len(ports) > 0:
+        port = ports[0].device
+    
         ser = serial.Serial(port, baud_rate, timeout=1)
         isSerialPortWorking = True
-        return ser
-    except serial.SerialException as e:
-        print(f"Error opening serial port: {e}")
-        sys.exit()
-    except PermissionError as e:
-        print(f"Permission error: {e}")
-        print("Ensure no other application is using the port and you have the necessary permissions.")
         
     num_frames_processed = 0 
     start = time.time()
@@ -133,7 +124,15 @@ def main():
             
             if isSerialPortWorking:
                 # Send the box coordinates to the board
-                ser.write(str(box_corners_dict).encode('utf-8'))
+                ser.write(
+                (
+                    str(box_corners_dict["top_left"]) + "," +
+                    str(box_corners_dict["top_right"]) + "," +
+                    str(box_corners_dict["bottom_right"]) + "," + 
+                    str(box_corners_dict["bottom_left"])
+                ).encode('utf-8')
+                )
+
                 ser.write(b'\n')
             
             annotated_frame = get_image_with_box_corners(frame, box_corners_dict)
