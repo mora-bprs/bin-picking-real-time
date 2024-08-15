@@ -158,15 +158,15 @@ def main():
             if isSerialPortWorking:
                 # Send the box coordinates to the board
                 ser.write(
-                (
-                    str(box_corners_dict["top_left"]) + "," +
-                    str(box_corners_dict["top_right"]) + "," +
-                    str(box_corners_dict["bottom_right"]) + "," + 
-                    str(box_corners_dict["bottom_left"])
-                ).encode('utf-8')
+                    str((box_corners_dict["top_left"], 
+                        box_corners_dict["top_right"],
+                        box_corners_dict["bottom_right"],
+                        box_corners_dict["bottom_left"])
+                    ).encode('utf-8')
                 )
 
-                ser.write(b'\n')
+            # Send a newline character to mark the end of the message
+            ser.write(b'\n')
             
             annotated_frame = get_image_with_box_corners(frame, box_corners_dict)
             num_frames_processed += 1
