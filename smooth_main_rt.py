@@ -64,10 +64,7 @@ class WebcamStream:
 
 
 def print_configuration(camera_index):
-    print("="*30)
-    print("Real-time Box Segmentation using Camera Stream")
-    print("="*30)
-    print()
+    
     print("Configuration Settings:")
     print(f"Camera Index: {camera_index}")
     print(f"Buffer Size: {buffer_size}")
@@ -83,6 +80,10 @@ def print_configuration(camera_index):
 
 
 def main():
+    print("="*30)
+    print("Real-time Box Segmentation using Camera Stream")
+    print("="*30)
+    print()
     # List to store available camera indexes
     available_cameras = []
 
@@ -165,8 +166,8 @@ def main():
                     ).encode('utf-8')
                 )
 
-            # Send a newline character to mark the end of the message
-            ser.write(b'\n')
+                # Send a newline character to mark the end of the message
+                ser.write(b'\n')
             
             annotated_frame = get_image_with_box_corners(frame, box_corners_dict)
             num_frames_processed += 1
