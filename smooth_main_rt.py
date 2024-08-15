@@ -11,7 +11,6 @@ import serial.tools.list_ports
 from utils import get_device, get_model, get_box_coordinates, get_image_with_box_corners
 
 # Configuration     
-camera_index = 0  # Change according to your camera (0 for default camera)
 buffer_size = 2
 model_name = "fastSAM-s"
 device = "cpu"
@@ -64,7 +63,7 @@ class WebcamStream:
         self.stopped = True
 
 
-def print_configuration():
+def print_configuration(camera_index):
     print("="*30)
     print("Real-time Box Segmentation using Camera Stream")
     print("="*30)
@@ -84,7 +83,30 @@ def print_configuration():
 
 
 def main():
-    print_configuration()
+    # List to store available camera indexes
+    available_cameras = []
+
+    # Test the first few camera indexes (0-9)
+    print("Checking available camera indexes...")
+    for index in range(4):
+        cap = cv2.VideoCapture(index)
+        if cap.isOpened():
+            available_cameras.append(index)
+            cap.release()  # Release the camera
+    
+    # Print the available camera indexes
+    print("Available camera indexes:", available_cameras)
+    
+    # Change according to your camera (0 for default camera)
+    camera_index = input("\nEnter the camera index: ")
+    if camera_index.isdigit():
+        camera_index = int(camera_index)
+    else:
+        print("Invalid camera index. Exiting...")
+        exit(0)
+           
+    print_configuration(camera_index=camera_index)
+    
     
     ports = serial.tools.list_ports.comports()
     baud_rate = 9600
@@ -95,18 +117,29 @@ def main():
     for port, desc, hwid in sorted(ports):
         print("Port:",port,"\nDesc:",desc,"\nHwid:",hwid,"\n")
     
-    
+    print("=====================================")
+    # Start Serial communication with the board
+    isSerialPortWorking = False
+    if len(ports) > 0:
+        # port = ports[0].device
+        print("Select the port to communicate with the board:")
+        for i, port in enumerate(ports):
+            print(f"{i}: {port.device}")
+            
+        port = input("Enter the port index: ")
+        if port.isdigit():
+            port = ports[int(port)].device
+        else:
+            print("Invalid port number. Exiting...")
+            exit(0)
+        
+        ser = serial.Serial(port, baud_rate, timeout=1)
+        isSerialPortWorking = True
     
     webcam_stream = WebcamStream(stream_id=camera_index, buffer_size=buffer_size)
     webcam_stream.start()
 
-    # Start Serial communication with the board
-    isSerialPortWorking = False
-    if len(ports) > 0:
-        port = ports[0].device
     
-        ser = serial.Serial(port, baud_rate, timeout=1)
-        isSerialPortWorking = True
         
     num_frames_processed = 0 
     start = time.time()
