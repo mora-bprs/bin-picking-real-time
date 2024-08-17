@@ -36,7 +36,7 @@ cd bin-picking-real-time
 ```
 
 - Create a python environment
-  
+
 ```bash
 python -m venv bin-venv && bin-venv\Scripts\activate
 ```
@@ -64,14 +64,16 @@ deactivate
 ## Possible Errors & Solutions
 
 - You have to install python and venv if not installed
-- Python version used:  `3.10.7`
+- Tested Python versions:`3.10.7`, `3.10.14`, `3.12.4`
+    > [!IMPORTANT]
+    > If you run into `ModuleNotFoundError: No module named 'pkg_resources'` error, run the following command after activating the virtual environment. After that, run the script again.
+    >
+    >```bash
+    >pip install --upgrade setuptools
+    >```
 - Install all the requirements in a virtual environment and then run the scripts
 - Change camera index if there are multiple cameras connected to the system (`default` is  `0`)
-- If you run into `ModuleNotFoundError: No module named 'pkg_resources'` error, run the following command after activating the virtual environment. After that, run the script again.
 
-```bash
-pip install --upgrade setuptools
-```
 
 
 ## Model Checkpoints
