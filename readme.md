@@ -65,7 +65,6 @@ deactivate
 
 - You have to install python and venv if not installed
 - Tested Python versions:`3.10.7`, `3.10.14`, `3.12.4`
-    > [!IMPORTANT]
     > If you run into `ModuleNotFoundError: No module named 'pkg_resources'` error, run the following command after activating the virtual environment. After that, run the script again.
     >
     >```bash
