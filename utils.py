@@ -58,6 +58,7 @@ def process_coordinates(mask, frame_h, frame_w):
 
     y1, x1 = tuple(np.min(true_indices, axis=0))[:-1]
     y4, x4 = tuple(np.max(true_indices, axis=0))[:-1]
+    print(y1, y4, x1, x4)
 
     # calculate the width and height of the bounding box
     width = x4 - x1
@@ -69,10 +70,9 @@ def process_coordinates(mask, frame_h, frame_w):
     # y3, x3 = y1 + height, x1
 
     # box center
-    by, bx = x1 + width / 2, y1 + height / 2
-    # print("box center: ", by, bx)
+    bx, by = x1 + width / 2, y1 + height / 2
 
-    ty, tx = abs((frame_h / 2) - by), abs((frame_w / 2) - bx)
+    ty, tx = abs((1088 / 2) - by), abs((1920 / 2) - bx)
     theta = np.arctan(ty / tx)
     print("translation coords: ", ty, tx, "theta: ", theta)
 

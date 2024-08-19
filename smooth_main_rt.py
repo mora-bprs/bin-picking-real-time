@@ -148,9 +148,9 @@ def main():
         for i, port in enumerate(ports):
             print(f"{i}: {port.device}")
 
-        port = input("enter the port index: ")
-        if port.isdigit():
-            port = ports[int(port)].device
+        port1 = input("enter the port index: ")
+        if port1.isdigit():
+            port1 = ports[int(port1)].device
         else:
             print("invalid port number. exiting...")
             exit(0)
@@ -166,7 +166,7 @@ def main():
             print("invalid port number. exiting...")
             exit(0)
 
-        serial1 = serial.Serial(port, baud_rate, timeout=1)
+        serial1 = serial.Serial(port1, baud_rate, timeout=1)
         serial2 = serial.Serial(port2, baud_rate, timeout=1)
         isSerialPortWorking = True
         isSerial2Working = True
@@ -194,7 +194,7 @@ def main():
                     frame, model, device, False, False, False
                 )
                 # INFO: detecting correct box position for pickup
-                threshold_radius = 40
+                threshold_radius = 100
 
                 annotated_frame = get_image_with_box_corners(frame, box_corners_dict)
                 num_frames_processed += 1
@@ -212,10 +212,11 @@ def main():
                         serial1.write(
                             str(
                                 (
-                                    box_corners_dict["top_left"],
-                                    box_corners_dict["top_right"],
-                                    box_corners_dict["bottom_right"],
-                                    box_corners_dict["bottom_left"],
+                                    # box_corners_dict["top_left"],
+                                    # box_corners_dict["top_right"],
+                                    # box_corners_dict["bottom_right"],
+                                    # box_corners_dict["bottom_left"],
+                                    "ready to pick"
                                 )
                             ).encode("utf-8")
                         )
