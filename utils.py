@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import torch
-from fastsam import FastSAM, FastSAMPrompt
+from fastsam import FastSAMPrompt
 from matplotlib import pyplot as plt
 
 import config
@@ -99,13 +99,13 @@ def get_device():
 
 def get_model(model_name: str):
     if model_name == "fastSAM":
-        from fastsam import FastSAM, FastSAMPrompt
+        from fastsam import FastSAM
 
         model_fast_sam = FastSAM(config.fast_sam_checkpoint)
         return model_fast_sam
 
     elif model_name == "fastSAM-s":
-        from fastsam import FastSAM, FastSAMPrompt
+        from fastsam import FastSAM
 
         model_fast_sam_s = FastSAM(config.fast_sam_s_checkpoint)
         return model_fast_sam_s
@@ -166,8 +166,6 @@ def show_box(box, ax):
 
 
 import matplotlib.patches as patches
-import matplotlib.pyplot as plt
-import numpy as np
 
 
 def plot_square(mask):

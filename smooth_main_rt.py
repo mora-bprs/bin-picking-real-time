@@ -20,20 +20,16 @@
 # 13. End effector releases the box ( approximated to stepper actuation in reverse )
 # 14. Repeat the process
 
-import sys
 import time
 from threading import Thread
 
 import cv2
 import serial.tools.list_ports
-import torch
 
 from utils import (
     get_box_coordinates,
-    get_device,
     get_image_with_box_corners,
     get_model,
-    process_coordinates,
 )
 
 # Configuration
@@ -133,32 +129,47 @@ def main():
 
     print_configuration(camera_index=camera_index)
 
+    # serial configuration
     ports = serial.tools.list_ports.comports()
-    baud_rate = 9600
+    baud_rate = 115200
 
-    print("Specified baud rate:", baud_rate)
+    print("specified baud rate:", baud_rate)
 
     for port, desc, hwid in sorted(ports):
-        print("Port:", port, "\nDesc:", desc, "\nHwid:", hwid, "\n")
+        print("port:", port, "\ndesc:", desc, "\nhwid:", hwid, "\n")
 
     print("=====================================")
     # Start Serial communication with the board
     isSerialPortWorking = False
+    isSerial2Working = False
     if len(ports) > 0:
         # port = ports[0].device
-        print("Select the port to communicate with the board:")
+        print("select the port to communicate with the grabber board:")
         for i, port in enumerate(ports):
             print(f"{i}: {port.device}")
 
-        port = input("Enter the port index: ")
+        port = input("enter the port index: ")
         if port.isdigit():
             port = ports[int(port)].device
         else:
-            print("Invalid port number. Exiting...")
+            print("invalid port number. exiting...")
+            exit(0)
+
+        print("select the port to communicate with the arm controller:")
+        for i, port in enumerate(ports):
+            print(f"{i}: {port.device}")
+
+        port2 = input("enter the port index: ")
+        if port2.isdigit():
+            port2 = ports[int(port2)].device
+        else:
+            print("invalid port number. exiting...")
             exit(0)
 
         serial1 = serial.Serial(port, baud_rate, timeout=1)
+        serial2 = serial.Serial(port2, baud_rate, timeout=1)
         isSerialPortWorking = True
+        isSerial2Working = True
 
     webcam_stream = WebcamStream(stream_id=camera_index, buffer_size=buffer_size)
     webcam_stream.start()
@@ -177,22 +188,44 @@ def main():
             # send predefined coordinates to arm computer
             pass
         else:
-            # Processing Image
             try:
+                # INFO: processing image
                 box_corners_dict, armctrl_dict = get_box_coordinates(
                     frame, model, device, False, False, False
                 )
+                # INFO: detecting correct box position for pickup
                 threshold_radius = 40
+
+                annotated_frame = get_image_with_box_corners(frame, box_corners_dict)
+                num_frames_processed += 1
+
+                cv2.imshow("frame", annotated_frame)
+
+                # TODO: try to do the serial work in separate thread
                 if (
                     armctrl_dict["ty"] <= threshold_radius
                     and armctrl_dict["tx"] <= threshold_radius
                 ):
-                    print("box is in the center, proceed to pickup")
-                else:
-                    # sending the coordinated to the arm to get it to point to the center of the box
                     if isSerialPortWorking:
+                        print("box is in the center, proceed to pickup")
                         # send the box coordinates to the arm controller board
                         serial1.write(
+                            str(
+                                (
+                                    box_corners_dict["top_left"],
+                                    box_corners_dict["top_right"],
+                                    box_corners_dict["bottom_right"],
+                                    box_corners_dict["bottom_left"],
+                                )
+                            ).encode("utf-8")
+                        )
+                        # Send a newline character to mark the end of the message
+                        serial1.write(b"\n")
+                else:
+                    # sending the coordinates to the arm to get it to point to the center of the box
+                    if isSerial2Working:
+                        # send the transition coordinates to the arm controller board
+                        serial2.write(
                             str(
                                 (
                                     armctrl_dict["tx"],
@@ -202,21 +235,14 @@ def main():
                             ).encode("utf-8")
                         )
 
-                        # Send a newline character to mark the end of the message
-                        serial1.write(b"\n")
-
-                    annotated_frame = get_image_with_box_corners(
-                        frame, box_corners_dict
-                    )
-                    num_frames_processed += 1
-
-                    cv2.imshow("frame", annotated_frame)
+                        # send a newline character to mark the end of the message
+                        serial2.write(b"\n")
 
             except ValueError:  # No box is detected
                 cv2.imshow("frame", frame)
                 num_frames_processed += 1
 
-        # BUG: fix keyboard interrupt
+        # BUG: fix keyboard interrupt not working in unix
         if cv2.waitKey(1) == ord("q"):
             if isSerialPortWorking:
                 serial1.close()
