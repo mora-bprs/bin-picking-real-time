@@ -1,0 +1,1 @@
+fast_sam_s_checkpoint = "FastSAM-s.pt"
