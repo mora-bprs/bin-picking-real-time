@@ -3,19 +3,19 @@ import numpy as np
 import torch
 from fastsam import FastSAMPrompt
 from matplotlib import pyplot as plt
-
+import logging
 import config
 
 
 # updated code
 # updated code
-def get_bounding_box_coordinates(mask):
+def get_bounding_box_coordinates(contour_points):
     """
     Calculate the coordinates of the bounding box surrounding the True region in the mask.
 
     Parameters
     ----------
-    mask : np.array
+    largest_contour : np.array
         Binary mask where True indicates the region of interest.
 
     Returns
@@ -25,30 +25,51 @@ def get_bounding_box_coordinates(mask):
         Dictionary keys: "top_left", "top_right", "bottom_right", "bottom_left".
         Dictionary elements: tuple : (y, x) coordinates of the corners.
     """
-    # Find the indices where the mask is True
-    true_indices = np.argwhere(mask)
 
-    # Get the bounding box of the True region
-    top_left = tuple(np.min(true_indices, axis=0))
-    bottom_right = tuple(np.max(true_indices, axis=0))
+    # Get the top-most point (minimum y)
+    top_most = tuple(contour_points[contour_points[:, 1].argmin()])
+    bottom_most = tuple(contour_points[contour_points[:, 1].argmax()])
 
-    # Remove the channels layer coordinate
-    top_left = top_left[:-1]
-    bottom_right = bottom_right[:-1]
+    # Get the left-most point (minimum x)
+    left_most = tuple(contour_points[contour_points[:, 0].argmin()])
+    right_most = tuple(contour_points[contour_points[:, 0].argmax()])
 
-    # Calculate the width and height of the bounding box
-    width = bottom_right[1] - top_left[1]
-    height = bottom_right[0] - top_left[0]
+    (x1, y1) = left_most
+    (x2, y2) = top_most 
+    (x3, y3) = right_most
+    (x4, y4) = bottom_most
+    
+    
+    A = (int((x1 + x4) / 2), int((y1 + y4) / 2)) # Mid point between left-most and bottom-most
+    B = (int((x2 + x3) / 2), int((y2 + y3) / 2)) # Mid point between top-most and right-most
 
-    # make a numpy array for top_right and bottom_left
-    top_right = (top_left[0], top_left[1] + width)
-    bottom_left = (top_left[0] + height, top_left[1])
+    C = (int((x1 + x2) / 2), int((y1 + y2) / 2)) # Mid point between left-most and top-most
+    D = (int((x3 + x4) / 2), int((y3 + y4) / 2)) # Mid point between right-most and bottom-most
+
+    # AB : Length of the line between A & B
+    AB = ((B[1] - A[1])**2 + (B[0] - A[0])**2)**0.5
+    CD = ((D[1] - C[1])**2 + (D[0] - C[0])**2)**0.5
+    
+    # if AB >= CD : longer_side = AB, shorter_side = CD
+    # orientation_angle is tan_inverse(AB)in degrees
+    if AB >= CD:
+        orientation_angle = np.arctan2((abs(B[1] - A[1])), (B[0] - A[0])) * 180 / np.pi
+        # print("AB >= CD")
+    elif CD > AB:
+        orientation_angle = np.arctan2((D[1] - C[1]), (D[0] - C[0])) * 180 / np.pi
+        # print("AB < CD")
+
 
     return {
-        "top_left": top_left,
-        "top_right": top_right,
-        "bottom_right": bottom_right,
-        "bottom_left": bottom_left,
+        "top_left": left_most,
+        "top_right": top_most,
+        "bottom_right": right_most,
+        "bottom_left": bottom_most,
+        "orientation_angle": orientation_angle,
+        "A": A,
+        "B": B,
+        "C": C,
+        "D": D
     }
 
 
@@ -231,6 +252,7 @@ def get_box_coordinates(
     showOriginalImage=False,
     showPoints=False,
     showPlotMaskWithHighestScore=True,
+    DEBUG = False
 ):
     """
     Parameters
@@ -262,11 +284,14 @@ def get_box_coordinates(
 
     # get image dimensions
     img_height, img_width, _ = img.shape
+    # if DEBUG: print("DEBUG:: image shape: ", img.shape)
 
     # get centre point coordinates
     center_point_coords = [int(img_width / 2), int(img_height / 2)]
     input_point = np.array([center_point_coords])
     input_label = np.array([1])
+    
+    # if DEBUG: print("DEBUG:: center point coordinates: ", center_point_coords)
 
     if showPoints:
         plt.figure(figsize=(10, 10))
@@ -284,29 +309,89 @@ def get_box_coordinates(
     # point prompt
     # points default [[0,0]] [[x1,y1],[x2,y2]]
     # point_label default [0] [1,0] 0:background, 1:foreground
-    img_mask = fast_sam_prompt_process.point_prompt(
+    ann_center_point = fast_sam_prompt_process.point_prompt(
         points=input_point, pointlabel=input_label
     )
+    
+    # if DEBUG: print("DEBUG:: ann_center_point shape: ", ann_center_point.shape)
+    
+    ann_center_point_squeezed = np.squeeze(ann_center_point) # remove the first dimension
+    # if DEBUG: print("DEBUG:: ann_center_point_squeezed shape: ", ann_center_point_squeezed.shape)
+    
+    # Convert boolean array to binary image
+    binary_mask_center_point = ann_center_point_squeezed.astype(np.uint8) * 255
+    # if DEBUG: print("DEBUG:: binary_mask_center_point shape: ", binary_mask_center_point.shape)
 
-    # plot_mask_with_score(img, "FastSAM output", img_mask, input_point, input_label )
+    # Find contours
+    contours, _ = cv2.findContours(binary_mask_center_point, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    # reshape image mask
-    # print(img_mask.shape)
-    img_mask = np.transpose(img_mask, (1, 2, 0))
-    # print(img_mask.shape)
+    # Find the largest contour
+    largest_contour = max(contours, key=cv2.contourArea)
+    
+    # if DEBUG: print("DEBUG:: largest_contour shape: ", largest_contour.shape)
+    
+    # if DEBUG: cv2.imshow("binary_mask_center_point", binary_mask_center_point)
+    
+    binary_mask_for_box = np.zeros_like(binary_mask_center_point)
 
-    if showPlotMaskWithHighestScore:
-        plot_square(img_mask)
-
+    # Draw the largest contour on the mask and fill it
+    cv2.drawContours(binary_mask_for_box, [largest_contour], 0, (255), thickness=cv2.FILLED)
+    
+    # Reshape the contour to remove the extra dimension
+    contour_points = largest_contour.reshape(-1, 2)
+    # print("DEBUG : After reshaping contour_points: ", contour_points.shape)
     # get the rectangular boxes
-    bounding_box_coords_dict = get_bounding_box_coordinates(img_mask)
-    armctrl_dict = process_coordinates(img_mask, img_height, img_width)
+    bounding_box_coords_dict = get_bounding_box_coordinates(contour_points)
+    # print("DEBUG:: bounding_box_coords_dict: ", bounding_box_coords_dict)
+    
+    # armctrl_dict = process_coordinates(binary_mask_for_box, img_height, img_width)
+    # print("DEBUG:: armctrl_dict: ", armctrl_dict)
+    
+    armctrl_dict = dict()
 
+
+    # Test values 
+    armctrl_dict["tx"] = 30
+    armctrl_dict["ty"] = 30
+    armctrl_dict["theta"] = 30
+    armctrl_dict["orientation_angle"] = bounding_box_coords_dict["orientation_angle"]
+    
+    # print("DEBUG :: After deleting values from bounding_box_coords_dict: ", bounding_box_coords_dict)
+    annotation_dict = {"box_center_point": center_point_coords,
+                       "box_binary_mask": binary_mask_for_box,
+                       "A": bounding_box_coords_dict["A"],
+                       "B": bounding_box_coords_dict["B"],
+                       "C": bounding_box_coords_dict["C"],
+                       "D": bounding_box_coords_dict["D"],
+                       "orientation_angle": bounding_box_coords_dict["orientation_angle"]}
+    
+    del bounding_box_coords_dict["orientation_angle"]
+    del bounding_box_coords_dict["A"]
+    del bounding_box_coords_dict["B"]
+    del bounding_box_coords_dict["C"]
+    del bounding_box_coords_dict["D"]
+    
+    if DEBUG: print("DEBUG:: annotation_dict: ", annotation_dict)
+    if DEBUG: 
+        print("Hello hwlljklasjflkajs")
+        print("DEBUG:: armctrl_dict: ", armctrl_dict)
+        print("DEBUG:: annotation_dict: ", annotation_dict)
+        print("DEBUG:: Orientation angle: ", armctrl_dict["orientation_angle"])
+        
+        # Copy the image to draw the lines
+        img = img.copy()
+        # line between A & B
+        cv2.line(img, (annotation_dict["A"][0], annotation_dict["A"][1]), (annotation_dict["B"][0], annotation_dict["B"][1]), (0, 255, 0), 2)
+        # line between C & D
+        cv2.line(img, (annotation_dict["C"][0], annotation_dict["C"][1]), (annotation_dict["D"][0], annotation_dict["D"][1]), (0, 255, 0), 2)
+        cv2.imshow("DEBUG : img", img)
     # get the coordinates of the rectangular bounding box
-    return bounding_box_coords_dict, armctrl_dict
+    
+    if DEBUG: cv2.imshow("DEBUG: binary_mask_for_box", binary_mask_for_box)
+    return bounding_box_coords_dict, armctrl_dict, annotation_dict
 
 
-def get_image_with_box_corners(frame, points_dict):
+def get_image_with_box_corners(frame, points_dict, circle_radius=10):
     """
     parameters
     ----------
@@ -319,7 +404,7 @@ def get_image_with_box_corners(frame, points_dict):
     -------
     frame : np.array : image frame with the corners of the bounding box annotated
     """
-    circle_radius = 5
+    
     # Define colors for each point in RGB format (not BGR format)
     colors_dict = {
         "blue": (0, 0, 255),

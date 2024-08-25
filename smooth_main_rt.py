@@ -38,6 +38,8 @@ model_name = "fastSAM-s"
 device = "cpu"
 fast_sam_s_checkpoint = "FastSAM-s.pt"
 
+detailed_annotations = False
+
 # Initialize model
 model = get_model(model_name)
 
@@ -110,7 +112,10 @@ def main():
 
     # Test the first few camera indexes (0-9)
     print("Checking available camera indexes...")
+    # TODO : print the camera index with its properties (resolution, fps, etc.) and name
+    # TODO: Uncommment the following lines 
     for index in range(4):
+        
         cap = cv2.VideoCapture(index)
         if cap.isOpened():
             available_cameras.append(index)
@@ -120,7 +125,8 @@ def main():
     print("Available camera indexes:", available_cameras)
 
     # Change according to your camera (0 for default camera)
-    camera_index = input("\nEnter the camera index: ")
+    # camera_index = input("\nEnter the camera index: ")
+    camera_index = "0"
     if camera_index.isdigit():
         camera_index = int(camera_index)
     else:
@@ -189,14 +195,46 @@ def main():
             pass
         else:
             try:
+                
+#######################################################################################################3
                 # INFO: processing image
-                box_corners_dict, armctrl_dict = get_box_coordinates(
-                    frame, model, device, False, False, False
+                print("Hello before box corners_dict")
+                box_corners_dict, armctrl_dict, annotation_dict = get_box_coordinates(
+                    frame, model, device, False, False, False, 
+                    DEBUG=True
                 )
+                print("Hellow after box corners_dict")
+                print(f"\n\n{box_corners_dict=}\n{armctrl_dict=}\n{annotation_dict=}")
                 # INFO: detecting correct box position for pickup
                 threshold_radius = 100
 
+                # annotated the corners
                 annotated_frame = get_image_with_box_corners(frame, box_corners_dict)
+               
+                if detailed_annotations:
+                    # annotate the lines that shows the orientation
+                    A = annotation_dict["A"]
+                    B = annotation_dict["B"]
+                    C = annotation_dict["C"]
+                    D = annotation_dict["D"]
+                    
+                    cv2.line(annotated_frame, A, B, (0, 255, 255), 2)
+                    cv2.line(annotated_frame, C, D, (0, 255, 0), 2)
+                    
+                    # annotate the center of the box
+                    box_center = annotation_dict["box_center"]
+                    cv2.circle(annotated_frame, box_center, 15, (255, 0, 0), -1)
+                    
+                    # annotate the center of the camera frame 
+                    frame_center = (frame.shape[1] // 2, frame.shape[0] // 2)
+                    cv2.circle(annotated_frame, frame_center, 15, (0, 0, 0), -1)
+                    
+                    # annotate the binary mask
+                    box_binary_mask = annotation_dict["box_binary_mask"]
+                    
+                    # add binary mask to the frame
+                    annotated_frame = cv2.addWeighted(annotated_frame, 1, box_binary_mask, 0.5, 0)    
+                
                 num_frames_processed += 1
 
                 cv2.imshow("frame", annotated_frame)
@@ -232,16 +270,28 @@ def main():
                                     armctrl_dict["tx"],
                                     armctrl_dict["ty"],
                                     armctrl_dict["theta"],
+                                    armctrl_dict["orientation"]
                                 )
                             ).encode("utf-8")
                         )
 
                         # send a newline character to mark the end of the message
                         serial2.write(b"\n")
-
-            except ValueError:  # No box is detected
-                cv2.imshow("frame", frame)
-                num_frames_processed += 1
+                        
+            # TODO : Uncomment the following later
+            # except ValueError:  # No box is detected
+            #     cv2.imshow("frame", frame)
+            #     num_frames_processed += 1
+        
+            # TODO : remove this line later
+            
+            except KeyboardInterrupt:
+                print("Program ended by user.")
+                break
+            
+            except Exception as e:
+                print("Error:", e)
+                # break
 
         # BUG: fix keyboard interrupt not working in unix
         if cv2.waitKey(1) == ord("q"):
