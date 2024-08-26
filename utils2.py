@@ -77,6 +77,10 @@ def get_bounding_box_coordinates(mask, DEBUG = False):
     top_right = top_most # blue
     bottom_right = right_most # green (this is where the error is)
     bottom_left = bottom_most # yellow/ cyan in opencv
+    
+    # Blue and Cyan points line is the orientation of the box
+    orientation_angle = np.arctan2((abs(top_right[1] - bottom_left[1])), (top_right[0] - bottom_left[0])) * 180 / np.pi
+    
 
     # orientation_angle is tan inverse of top
     
@@ -99,9 +103,10 @@ def get_bounding_box_coordinates(mask, DEBUG = False):
         # make a numpy array for top_right and bottom_left
         top_right = (top_left[0], top_left[1] + width)
         bottom_left = (top_left[0] + height, top_left[1])
+        
+        orientation_angle = np.arctan2((abs(top_left[1] - bottom_left[1])), (top_left[0] - bottom_left[0])) * 180 / np.pi
+     
     
-    # Blue and Cyan points line is the orientation of the box
-    orientation_angle = np.arctan2((abs(top_right[1] - bottom_left[1])), (top_right[0] - bottom_left[0])) * 180 / np.pi
     
     return {
         "top_left": top_left,

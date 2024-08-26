@@ -246,6 +246,10 @@ def main():
             except ValueError or IndexError:  # No box is detected
                 cv2.imshow("frame", frame)
                 num_frames_processed += 1
+                
+            except KeyboardInterrupt:
+                print("Program ended by user.")
+                break
 
         # BUG: fix keyboard interrupt not working in unix
         if cv2.waitKey(1) == ord("q"):
