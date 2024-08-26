@@ -27,8 +27,6 @@ def get_bounding_box_coordinates(mask, DEBUG = False):
     """
     
     DEBUG = DEBUG
-    # Find the indices where the mask is True
-    true_indices = np.argwhere(mask)
     
     # Convert boolean mask to uint8 type
     mask_uint8 = mask.astype(np.uint8) * 255
@@ -65,16 +63,15 @@ def get_bounding_box_coordinates(mask, DEBUG = False):
     top_most = top_most[1], top_most[0]
     bottom_most = bottom_most[1], bottom_most[0]
     left_most = left_most[1], left_most[0]
-    right_most = right_most[1], right_most[0]
-    
-    
+    # right_most = right_most[1], right_most[0]
+    right_most =  right_most[1], right_most[0]   
     
     
     # Print the coordinates
-    print(f"Leftmost coordinate: {left_most}")
-    print(f"Rightmost coordinate: {right_most}")
-    print(f"Topmost coordinate: {top_most}")
-    print(f"Bottommost coordinate: {bottom_most}")
+    # print(f"Leftmost coordinate: {left_most}")
+    # print(f"Rightmost coordinate: {right_most}")
+    # print(f"Topmost coordinate: {top_most}")
+    # print(f"Bottommost coordinate: {bottom_most}")
     
     top_left = left_most # red
     top_right = top_most # blue
@@ -82,6 +79,26 @@ def get_bounding_box_coordinates(mask, DEBUG = False):
     bottom_left = bottom_most # yellow/ cyan in opencv
 
     # orientation_angle is tan inverse of top
+    
+    if abs(top_left[1] - top_right[1]) < 10 and abs(top_left[0] - top_right[0]) < 10:
+    # Find the indices where the mask is True
+        true_indices = np.argwhere(mask)
+
+        # Get the bounding box of the True region
+        top_left = tuple(np.min(true_indices, axis=0))
+        bottom_right = tuple(np.max(true_indices, axis=0))
+
+        # Remove the channels layer coordinate
+        top_left = top_left[:-1]
+        bottom_right = bottom_right[:-1]
+
+        # Calculate the width and height of the bounding box
+        width = bottom_right[1] - top_left[1]
+        height = bottom_right[0] - top_left[0]
+
+        # make a numpy array for top_right and bottom_left
+        top_right = (top_left[0], top_left[1] + width)
+        bottom_left = (top_left[0] + height, top_left[1])
     
     # Blue and Cyan points line is the orientation of the box
     orientation_angle = np.arctan2((abs(top_right[1] - bottom_left[1])), (top_right[0] - bottom_left[0])) * 180 / np.pi
